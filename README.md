@@ -76,6 +76,10 @@ Options:
     signature key file or keystore
   --label-hint
     label for the 'hint' row
+  --label-location
+    label for the 'location' row
+  --label-reason
+    label for the 'reason' row
   --label-signee
     label for the 'signee' row
   --label-timestamp
@@ -120,6 +124,9 @@ Options:
   --width
     width of the signature block in cm
     Default: 10.0
+  --label-width
+    width of the label column in cm
+    Default: 3.0  
 ```
 
 ### Usage with Let's Encrypt certificates

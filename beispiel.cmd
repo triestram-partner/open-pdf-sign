@@ -1,0 +1,1 @@
+call hvbtest.cmd --key key.ks --passphrase GehHeim --page 1 --locale de-DE --input unsigned.pdf --output signed.pdf --signature-contact "Henning von Bargen" --signature-location "Bochum" --label-width 2.5 --signature-reason "Unterschrieben von Karl Ramseier" --no-hint --timestamp --top 26.0 --left 2.0 --width 7.0 --timezone Europe/Berlin

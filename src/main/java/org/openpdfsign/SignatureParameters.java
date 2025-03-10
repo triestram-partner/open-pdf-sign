@@ -37,6 +37,10 @@ public class SignatureParameters {
     @JsonProperty("width")
     private float width = 10;
 
+    @Parameter(required = false, names={"--label-width"}, description = "width of the labels column in cm")
+    @JsonProperty("label-width")
+    private float labelWidth = 3;
+
     @Parameter(required = false, names={"--hint"}, description = "text to be displayed in signature field")
     @JsonProperty("hint")
     private String hint;
@@ -68,6 +72,14 @@ public class SignatureParameters {
     @Parameter(required = false, names={"--label-timestamp"}, description = "label for the 'timestamp' row")
     @JsonProperty("label-timestamp")
     private String labelTimestamp;
+
+    @Parameter(required = false, names={"--label-reason"}, description = "label for the 'reason' row")
+    @JsonProperty("label-reason")
+    private String labelReason;
+
+    @Parameter(required = false, names={"--label-location"}, description = "label for the 'location' row")
+    @JsonProperty("label-location")
+    private String labelLocation;
 
     @Parameter(required = false, names={"--label-signee"}, description = "label for the 'signee' row")
     @JsonProperty("label-signee")

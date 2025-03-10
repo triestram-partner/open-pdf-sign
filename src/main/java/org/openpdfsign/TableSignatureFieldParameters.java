@@ -10,8 +10,13 @@ public class TableSignatureFieldParameters extends SignatureFieldParameters  {
     private String signatureDate;
     private String signaturString;
     private String hint;
+    private String reason;
+    private String location;
     private String labelHint;
+    private String labelReason;
+    private String labelLocation;
     private String labelSignee;
     private String labelTimestamp;
     private Boolean imageOnly;
+    private float labelWidth;
 }

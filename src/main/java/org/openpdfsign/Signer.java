@@ -4,6 +4,7 @@ import com.beust.jcommander.Strings;
 import eu.europa.esig.dss.enumerations.CertificationPermission;
 import eu.europa.esig.dss.enumerations.DigestAlgorithm;
 import eu.europa.esig.dss.enumerations.SignatureLevel;
+import eu.europa.esig.dss.enumerations.X520Attributes;
 import eu.europa.esig.dss.model.*;
 import eu.europa.esig.dss.pades.PAdESSignatureParameters;
 import eu.europa.esig.dss.pades.SignatureImageParameters;
@@ -11,10 +12,12 @@ import eu.europa.esig.dss.pades.signature.PAdESService;
 import eu.europa.esig.dss.pdf.pdfbox.PdfBoxNativeObjectFactory;
 import eu.europa.esig.dss.service.crl.OnlineCRLSource;
 import eu.europa.esig.dss.service.http.commons.TimestampDataLoader;
+
 import eu.europa.esig.dss.service.http.proxy.ProxyConfig;
 import eu.europa.esig.dss.service.http.proxy.ProxyProperties;
 import eu.europa.esig.dss.service.ocsp.OnlineOCSPSource;
 import eu.europa.esig.dss.service.tsp.OnlineTSPSource;
+import eu.europa.esig.dss.spi.DSSASN1Utils;
 import eu.europa.esig.dss.spi.x509.CommonCertificateSource;
 import eu.europa.esig.dss.spi.x509.CommonTrustedCertificateSource;
 import eu.europa.esig.dss.spi.x509.aia.DefaultAIASource;
@@ -24,6 +27,7 @@ import eu.europa.esig.dss.token.JKSSignatureToken;
 import eu.europa.esig.dss.token.KSPrivateKeyEntry;
 import eu.europa.esig.dss.validation.CommonCertificateVerifier;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -214,10 +218,18 @@ public class Signer {
                 formatter = formatter.withZone(ZoneId.of(params.getTimezone()));
             }
             fieldParameters.setSignatureDate(formatter.format(signatureParameters.getSigningDate().toInstant()));
-            fieldParameters.setSignaturString(signingToken.getKey(keyAlias).getCertificate().getSubject().getPrettyPrintRFC2253());
+            //fieldParameters.setSignaturString(signingToken.getKey(keyAlias).getCertificate().getSubject().getPrincipal().getName());
+
+            final String commonName = DSSASN1Utils.extractAttributeFromX500Principal(
+                new ASN1ObjectIdentifier(X520Attributes.COMMONNAME.getOid()), signingToken.getKey(keyAlias).getCertificate().getSubject());
+            fieldParameters.setSignaturString(commonName);
+
             fieldParameters.setLabelHint(ObjectUtils.firstNonNull(params.getLabelHint(), Configuration.getInstance().getResourceBundle().getString("hint")));
             fieldParameters.setLabelSignee(ObjectUtils.firstNonNull(params.getLabelSignee(), Configuration.getInstance().getResourceBundle().getString("signee")));
             fieldParameters.setLabelTimestamp(ObjectUtils.firstNonNull(params.getLabelTimestamp(), Configuration.getInstance().getResourceBundle().getString("timestamp")));
+            fieldParameters.setLabelReason(ObjectUtils.firstNonNull(params.getLabelReason(), Configuration.getInstance().getResourceBundle().getString("reason")));
+            fieldParameters.setLabelLocation(ObjectUtils.firstNonNull(params.getLabelLocation(), Configuration.getInstance().getResourceBundle().getString("location")));
+            fieldParameters.setLabelWidth(params.getLabelWidth() * POINTS_PER_MM * 10f);
             if (!Strings.isStringEmpty(params.getHint())) {
                 fieldParameters.setHint(params.getHint());
             } else {
@@ -226,6 +238,12 @@ public class Signer {
                 } else {
                     fieldParameters.setHint(Configuration.getInstance().getResourceBundle().getString("hint_text"));
                 }
+            }
+            if (params.getReason() != null) {
+                fieldParameters.setReason(params.getReason());
+            }
+            if (params.getLocation() != null) {
+                fieldParameters.setLocation(params.getLocation());
             }
             fieldParameters.setImageOnly(params.getImageOnly());
 
