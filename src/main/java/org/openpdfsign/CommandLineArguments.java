@@ -13,7 +13,11 @@ import java.util.ArrayList;
 @Setter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CommandLineArguments extends SignatureParameters {
+public class CommandLineArguments extends SignatureParameters implements Cloneable {
+
+    public Object clone() {
+        return super.clone();
+    }
 
     @Parameter(required = false, names = { "-h", "--help" }, description = "prints this page", help = true)
     private boolean help = false;

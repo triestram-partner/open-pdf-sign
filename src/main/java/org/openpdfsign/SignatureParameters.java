@@ -12,7 +12,18 @@ import java.util.List;
 
 @Getter
 @Setter
-public class SignatureParameters {
+public class SignatureParameters implements Cloneable {
+
+    public Object clone() {
+        try {
+            return super.clone();
+        }
+        catch( CloneNotSupportedException e )
+        {
+            return null;
+        }        
+    }
+
     @Parameter(required = false, names={"--image"}, description = "Image to be placed in signature block")
     @JsonProperty("image")
     private String imageFile;

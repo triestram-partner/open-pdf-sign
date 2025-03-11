@@ -83,11 +83,24 @@ public class SignerServlet extends HttpServlet {
         //get path
         Path path;
         String keyPath;
+
+        CommandLineArguments params = (CommandLineArguments)ServerConfigHolder.getInstance().getParams().clone();
+
         Map<String, String> errorMap = new HashMap<>();
         if (req.getContentType().equals("application/json")) {
             String requestAsJson = req.getReader().lines().collect(Collectors.joining());
+
             try {
                 CommandLineArguments args = mapper.reader().readValue(requestAsJson, CommandLineArguments.class);
+
+                String location = args.getLocation();
+                if (location != null) {
+                	params.setLocation(location);
+                }
+                String reason = args.getReason();
+                if (reason != null) {
+                	params.setReason(reason);
+                }
                 path = Paths.get(args.getInputFile());
                 keyPath = args.getKeyFile();
             }
@@ -104,44 +117,44 @@ public class SignerServlet extends HttpServlet {
             return;
         }
 
-        if (keyPath != null) {
-            if (ServerConfigHolder.getInstance().getKeystores().containsKey(keyPath)) {
-                //key matches
-            }
-            else if (ServerConfigHolder.getInstance().getKeystores().containsKey("_")) {
-                keyPath = "_";
-            }
-            else {
-                //key not found, exception
-                res.setStatus(400);
-                res.getOutputStream().println("no key loaded for host");
-                res.getOutputStream().flush();
-                log.debug("received request with invalid host header, no default key: ", keyPath);
-                return;
-            }
-        }
-
-        if (!path.toFile().exists()) {
-            res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-
-        //key needs to be loaded OR not given
-        if (keyPath == null) {
-            keyPath = ServerConfigHolder.getInstance().getKeystores().keySet().stream().findFirst().get();
-        } else if (!ServerConfigHolder.getInstance().getKeystores().containsKey(keyPath)) {
-            errorMap.put("error","keyfile not loaded on server startup");
-            res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            res.getOutputStream().print(mapper.writeValueAsString(errorMap));
-            return;
-        }
-
-        //sign pdf
-        Signer s = new Signer();
-        res.setStatus(HttpServletResponse.SC_OK);
-        res.setHeader("Content-Disposition", "attachment; filename=\"" + path.getFileName().toString() + "\"");
-        s.signPdf(path, null, ServerConfigHolder.getInstance().getKeystores().get(keyPath), ServerConfigHolder.getInstance().getKeystorePassphrase(), res.getOutputStream(), ServerConfigHolder.getInstance().getParams());
-        log.debug("signed " + path + " with " + keyPath);
-        res.getOutputStream().flush();
+		if (keyPath != null) {
+		    if (ServerConfigHolder.getInstance().getKeystores().containsKey(keyPath)) {
+		        //key matches
+		    }
+		    else if (ServerConfigHolder.getInstance().getKeystores().containsKey("_")) {
+		        keyPath = "_";
+		    }
+		    else {
+		        //key not found, exception
+		        res.setStatus(400);
+		        res.getOutputStream().println("no key loaded for host");
+		        res.getOutputStream().flush();
+		        log.debug("received request with invalid host header, no default key: ", keyPath);
+		        return;
+		    }
+		}
+		
+		if (!path.toFile().exists()) {
+		    res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		    return;
+		}
+		
+		//key needs to be loaded OR not given
+		if (keyPath == null) {
+		    keyPath = ServerConfigHolder.getInstance().getKeystores().keySet().stream().findFirst().get();
+		} else if (!ServerConfigHolder.getInstance().getKeystores().containsKey(keyPath)) {
+		    errorMap.put("error","keyfile not loaded on server startup");
+		    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		    res.getOutputStream().print(mapper.writeValueAsString(errorMap));
+		    return;
+		}
+		
+		//sign pdf
+		Signer s = new Signer();
+		res.setStatus(HttpServletResponse.SC_OK);
+		res.setHeader("Content-Disposition", "attachment; filename=\"" + path.getFileName().toString() + "\"");
+		s.signPdf(path, null, ServerConfigHolder.getInstance().getKeystores().get(keyPath), ServerConfigHolder.getInstance().getKeystorePassphrase(), res.getOutputStream(), params);
+		log.debug("signed " + path + " with " + keyPath);
+		res.getOutputStream().flush();
     }
 }
