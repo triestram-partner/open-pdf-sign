@@ -93,3 +93,11 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
+
+# Special files used internally for debugging this project
+signed*.pdf
+unsigned*.pdf
+key.ks
+*.log
+beispiel*
+Liberation*.ttf
