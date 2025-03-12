@@ -26,6 +26,8 @@ import java.util.Scanner;
 @Slf4j
 public class CLIApplication {
 
+    public static Server server = null;
+
     public static void main(String[] args) throws Exception {
         log.debug("Starting open-pdf-sign");
         CommandLineArguments cla = parseArguments(args);
@@ -119,7 +121,7 @@ public class CLIApplication {
             }
             ServerConfigHolder.getInstance().setKeystorePassphrase(keystorePassphrase);
 
-            Server server = new Server();
+            server = new Server();
             ServerConnector connector = new ServerConnector(server);
             ServletHandler servletHandler = new ServletHandler();
             server.setHandler(servletHandler);

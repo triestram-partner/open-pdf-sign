@@ -1,6 +1,7 @@
 package org.openpdfsign;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.Server;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,8 +13,12 @@ import java.io.IOException;
 public class StopServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-
         log.info("\'/stop\'' request received => Shutdown program!");
+        Server server = CLIApplication.server;
+        if (server != null) {
+            server.setStopAtShutdown(true);
+            server.setStopTimeout(2000);
+        }
         System.exit(0);
     }
 }
