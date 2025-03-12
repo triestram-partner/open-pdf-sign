@@ -123,6 +123,7 @@ public class CLIApplication {
             ServerConnector connector = new ServerConnector(server);
             ServletHandler servletHandler = new ServletHandler();
             server.setHandler(servletHandler);
+            servletHandler.addServletWithMapping(StopServlet.class,"/stop");
             servletHandler.addServletWithMapping(SignerServlet.class,"/*");
             connector.setPort(cla.getPort() > 0 ? cla.getPort() : 8090);
             connector.setHost(cla.getHostname() != null ? cla.getHostname() : "localhost");
