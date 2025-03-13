@@ -16,9 +16,18 @@ public class StopServlet extends HttpServlet {
         log.info("\'/stop\'' request received => Shutdown program!");
         Server server = CLIApplication.server;
         if (server != null) {
-            server.setStopAtShutdown(true);
-            server.setStopTimeout(2000);
+
+            Runnable stopRunnable = () -> {
+                try {
+                  System.out.println("STOPPING: " + server);
+                  Thread.sleep(1000);
+                  server.setStopTimeout(2000);
+                  server.stop();
+                } catch (Exception e) {
+                  e.printStackTrace();
+                }
+              };
+              new Thread(stopRunnable).start();
         }
-        System.exit(0);
     }
 }
