@@ -11,13 +11,14 @@ import eu.europa.esig.dss.pades.SignatureImageParameters;
 import eu.europa.esig.dss.pades.signature.PAdESService;
 import eu.europa.esig.dss.pdf.pdfbox.PdfBoxNativeObjectFactory;
 import eu.europa.esig.dss.service.crl.OnlineCRLSource;
+import eu.europa.esig.dss.service.http.commons.HostConnection;
 import eu.europa.esig.dss.service.http.commons.TimestampDataLoader;
-
+import eu.europa.esig.dss.service.http.commons.UserCredentials;
 import eu.europa.esig.dss.service.http.proxy.ProxyConfig;
 import eu.europa.esig.dss.service.http.proxy.ProxyProperties;
 import eu.europa.esig.dss.service.ocsp.OnlineOCSPSource;
 import eu.europa.esig.dss.service.tsp.OnlineTSPSource;
-import eu.europa.esig.dss.spi.DSSASN1Utils;
+import eu.europa.esig.dss.spi.validation.CommonCertificateVerifier;
 import eu.europa.esig.dss.spi.x509.CommonCertificateSource;
 import eu.europa.esig.dss.spi.x509.CommonTrustedCertificateSource;
 import eu.europa.esig.dss.spi.x509.aia.DefaultAIASource;
@@ -25,14 +26,15 @@ import eu.europa.esig.dss.spi.x509.tsp.CompositeTSPSource;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
 import eu.europa.esig.dss.token.JKSSignatureToken;
 import eu.europa.esig.dss.token.KSPrivateKeyEntry;
-import eu.europa.esig.dss.validation.CommonCertificateVerifier;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureOptions;
@@ -185,7 +187,7 @@ public class Signer {
 
             //add new page, if user requested, force reopen document
             if (params.getAddPage() != null && params.getAddPage() == true) {
-                PDDocument pdDocument = PDDocument.load(toSignDocument.openStream());
+                PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(toSignDocument.openStream()));
                 PDPage newPage = new PDPage(pdDocument.getPage(pdDocument.getNumberOfPages() - 1).getMediaBox());
                 pdDocument.addPage(newPage);
                 Set<COSDictionary> cosSet = new HashSet<>();
@@ -197,7 +199,7 @@ public class Signer {
             }
 
             if (params.getPage() < 0) {
-                PDDocument pdDocument = PDDocument.load(toSignDocument.openStream());
+                PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(toSignDocument.openStream()));
                 int pageCount = pdDocument.getNumberOfPages();
                 fieldParameters.setPage(pageCount + (1 + params.getPage()));
                 pdDocument.close();
@@ -218,12 +220,7 @@ public class Signer {
                 formatter = formatter.withZone(ZoneId.of(params.getTimezone()));
             }
             fieldParameters.setSignatureDate(formatter.format(signatureParameters.getSigningDate().toInstant()));
-            //fieldParameters.setSignaturString(signingToken.getKey(keyAlias).getCertificate().getSubject().getPrincipal().getName());
-
-            final String commonName = DSSASN1Utils.extractAttributeFromX500Principal(
-                new ASN1ObjectIdentifier(X520Attributes.COMMONNAME.getOid()), signingToken.getKey(keyAlias).getCertificate().getSubject());
-            fieldParameters.setSignaturString(commonName);
-
+            fieldParameters.setSignaturString(signingToken.getKey(keyAlias).getCertificate().getSubject().getPrettyPrintRFC2253());
             fieldParameters.setLabelHint(ObjectUtils.firstNonNull(params.getLabelHint(), Configuration.getInstance().getResourceBundle().getString("hint")));
             fieldParameters.setLabelSignee(ObjectUtils.firstNonNull(params.getLabelSignee(), Configuration.getInstance().getResourceBundle().getString("signee")));
             fieldParameters.setLabelTimestamp(ObjectUtils.firstNonNull(params.getLabelTimestamp(), Configuration.getInstance().getResourceBundle().getString("timestamp")));
@@ -265,11 +262,11 @@ public class Signer {
             compositeTSPSource.setTspSources(tspSources);
             if (params.getTSA().isEmpty()) {
                 Arrays.stream(Configuration.getInstance().getProperties().getStringArray("tsp_sources")).forEach(source -> {
-                    tspSources.put(source, this.buildTspSource(source, proxyConfig));
+                    tspSources.put(source, this.buildTspSource(source, proxyConfig, params.getTsaUsername(), params.getTsaPassword()));
                 });
             } else {
                 params.getTSA().stream().forEach(source -> {
-                    tspSources.put(source, this.buildTspSource(source, proxyConfig));
+                    tspSources.put(source, this.buildTspSource(source, proxyConfig, params.getTsaUsername(), params.getTsaPassword()));
                 });
             }
             service.setTspSource(compositeTSPSource);
@@ -302,9 +299,12 @@ public class Signer {
         }
     }
 
-    private OnlineTSPSource buildTspSource(String source, ProxyConfig proxyConfig) {
+    private OnlineTSPSource buildTspSource(String source, ProxyConfig proxyConfig, String tsaUsername, String tsaPassword) {
         TimestampDataLoader timestampDataLoader = new TimestampDataLoader();
         timestampDataLoader.setProxyConfig(proxyConfig);
+        if (!StringUtils.isEmpty(tsaUsername) && !StringUtils.isEmpty(tsaPassword)) {
+            timestampDataLoader.addAuthentication(new HostConnection(), new UserCredentials(tsaUsername, tsaPassword.toCharArray()));
+        }
         return new OnlineTSPSource(source, timestampDataLoader);
     }
 

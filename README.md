@@ -26,7 +26,7 @@ curl --location --output open-pdf-sign.jar \
 Alternatively, open-pdf-sign is also available on [nix](https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/misc/open-pdf-sign),
 a wrapper is available on [npm](https://www.npmjs.com/package/open-pdf-sign), and alongside a installer for [nginx](https://github.com/open-pdf-sign/open-pdf-sign-configurator).
 
-Make sure that Java is installed in at least version 8.
+Make sure that Java is installed in at least version 11.
 
 ### Run
 
@@ -116,9 +116,13 @@ Options:
     Y coordinate of the signature block in cm
     Default: 1.0
   --tsa
-    use specific time stamping authority as source (if multiple given, will
+    use specific time stamping authority (TSA) as source (if multiple given, will
     be used in given order as fallback)
     Default: []
+  --tsa-username
+    username for TSA server
+  --tsa-password
+    password for TSA server
   --version
     prints version of this program
   --width
@@ -208,7 +212,7 @@ This way, you could also configure multiple (virtual) hosts.
 ### Requirements
 
 * [Maven](https://maven.apache.org/)
-* JDK 8
+* JDK 11
 
 ### Build
 

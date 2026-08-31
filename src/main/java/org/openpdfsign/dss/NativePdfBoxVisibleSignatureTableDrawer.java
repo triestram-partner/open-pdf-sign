@@ -42,12 +42,13 @@ import java.util.List;
 
 public class NativePdfBoxVisibleSignatureTableDrawer extends NativePdfBoxVisibleSignatureDrawer {
 
-    public static String FONT_DIR = System.getProperty("fontDirectory", "C:/git-repos/triestram-partner/open-pdf-sign");
+    public static String FONT_DIR = System.getProperty("fontDirectory", "C:/svn/modules/reporting/trunk/open-pdf-sign");
 
     @Override
     public void draw() throws IOException {
         try (PDDocument doc = new PDDocument(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            
+            PDImageXObject imageXObject = PDImageXObject.createFromByteArray(doc, IOUtils.toByteArray(parameters.getImage().openStream()), parameters.getImage().getName());
+
             //Get information of type TableSignatureFieldParameters
             TableSignatureFieldParameters tableParameters = null;
             if (parameters.getFieldParameters() instanceof TableSignatureFieldParameters) {
@@ -79,7 +80,6 @@ public class NativePdfBoxVisibleSignatureTableDrawer extends NativePdfBoxVisible
 
             if (tableParameters.getImageOnly()) {
                 //image only as single-cell
-                PDImageXObject imageXObject = PDImageXObject.createFromByteArray(doc, IOUtils.toByteArray(parameters.getImage().openStream()), parameters.getImage().getName());
                 myTableBuilder.addColumnsOfWidth(parameters.getFieldParameters().getWidth())
                         .backgroundColor(Color.white)
                         .borderWidth(0)
@@ -99,7 +99,6 @@ public class NativePdfBoxVisibleSignatureTableDrawer extends NativePdfBoxVisible
                 // Load bold and regular font
                 PDType0Font boldFont = PDType0Font.load(doc, new File(FONT_DIR + File.separator + "LiberationSans-Bold.ttf"));
                 PDType0Font regularFont = PDType0Font.load(doc, new File(FONT_DIR + File.separator + "LiberationSans-Regular.ttf"));
-
 
                 // Build the table
                 myTableBuilder
@@ -178,7 +177,7 @@ public class NativePdfBoxVisibleSignatureTableDrawer extends NativePdfBoxVisible
                 cs.saveGraphicsState();
                 tableDrawer.draw();
                 cs.transform(Matrix.getRotateInstance(
-                        ((double) 360 - ImageRotationUtils.getRotation(parameters.getRotation())), 400, 200));
+                        ((double) 360 - ImageRotationUtils.getRotation(parameters.getFieldParameters().getRotation())), 400, 200));
 
                 cs.restoreGraphicsState();
 
@@ -246,7 +245,7 @@ public class NativePdfBoxVisibleSignatureTableDrawer extends NativePdfBoxVisible
 
                 cs.drawImage(imageXObject, xAxis, yAxis, width, height);
                 cs.transform(Matrix.getRotateInstance(
-                        ((double) 360 - ImageRotationUtils.getRotation(parameters.getRotation())), width, height));
+                        ((double) 360 - ImageRotationUtils.getRotation(parameters.getFieldParameters().getRotation())), width, height));
 
                 cs.restoreGraphicsState();
             }
